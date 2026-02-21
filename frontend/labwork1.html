@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лабораторная 1 — MetricForge</title>
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/footer.css">
+</head>
+<body>
+
+<div id="header-placeholder"></div>
+
+<div class="container mt-5">
+    <h1>Лабораторная 1: Анализ F#</h1>
+    <p>Вставьте код на F# и нажмите "Рассчитать".</p>
+
+    <textarea id="codeInput" class="form-control" rows="10"></textarea>
+
+    <button onclick="calculateMetrics(1)" class="btn btn-primary mt-3">
+        Рассчитать
+    </button>
+
+    <div id="result" class="mt-4"></div>
+</div>
+
+<div id="footer-placeholder"></div>
+
+<script src="js/jquery/jquery.min.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+async function calculateMetrics(labworkId) {
+    const code = document.getElementById('codeInput').value;
+
+    const response = await fetch(`http://127.0.0.1:8000/labwork/${labworkId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labwork_id: labworkId, code })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "Не готово") {
+        document.getElementById('result').innerHTML =
+            `<p class="text-warning">Лабораторная ${labworkId} ещё не готова</p>`;
+        return;
+    }
+
+    let html = '<h3>Метрики Холстеда</h3><table class="table"><tbody>';
+
+    for (let key in data.metrics) {
+        html += `<tr><td>${key}</td><td>${data.metrics[key]}</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+
+    document.getElementById('result').innerHTML = html;
+}
+</script>
+
+</body>
+</html>
