@@ -1,6 +1,8 @@
 from pydantic import BaseModel
+from typing import Dict, Union
 
 
-class LabworkResponse(BaseModel):
-    labwork_id: int
-    code: str
+class FirstLBResponse(BaseModel):
+    metrics: Dict[str, Union[int, float]]
+    operators: Dict[str, int]
+    operands: Dict[str, int]

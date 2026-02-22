@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const codeInput = document.getElementById("codeInput");
     const resultEl = document.getElementById("result");
+    // const API_URL = "https://nonresilient-lauryn-deliberately.ngrok-free.dev";
+    const API_URL = "http://127.0.0.1:9000";
 
     function initTable() {
         const metrics = {
@@ -10,7 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
             "N2 (всего операндов)": 0,
             "Словарь программы": 0,
             "Длина программы": 0,
-            "Объем программы": 0
+            "Объем программы": 0,
+            "Сложность": 0,
+            "Трудоёмкость": 0,
+            "Время": 0
         };
 
         let html = '<h3>Метрики Холстеда</h3><table class="table table-bordered"><tbody>';
@@ -27,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const code = codeInput.value || "";
 
         try {
-            const response = await fetch("https://nonresilient-lauryn-deliberately.ngrok-free.dev/labwork/1", {
+            const response = await fetch(`${API_URL}/labwork/1`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ labwork_id: 1, code })
