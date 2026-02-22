@@ -1,23 +1,12 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MetricForge — Метрики Холстеда</title>
-
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/footer.css">
-</head>
-<body>
-
-<div id="header-placeholder"></div>
-
+---
+layout: default
+title: MetricForge — Метрики Холстеда
+---
 <section class="bg-light py-5">
     <div class="container text-center">
         <h1 class="display-4 fw-bold">MetricForge</h1>
         <p class="lead text-muted">
-            Анализ кода на F# с расчётом метрик Холстеда
+            Лабораторные работы по предмету «Метрология, стандартизация и сертификация»
         </p>
     </div>
 </section>
@@ -35,7 +24,7 @@
                         <p class="card-text text-muted">
                             Анализ кода на F# и расчёт метрик Холстеда
                         </p>
-                        <a href="labwork1.html" class="btn btn-dark">
+                        <a href="{{ '/labwork1' | relative_url }}" class="btn btn-dark">
                             Открыть
                         </a>
                     </div>
@@ -49,7 +38,7 @@
                         <p class="card-text text-muted">
                             Будущая лабораторная работа (в разработке)
                         </p>
-                        <a href="labwork2.html" class="btn btn-outline-dark">
+                        <a href="{{ '/labwork2' | relative_url }}" class="btn btn-outline-dark">
                             Открыть
                         </a>
                     </div>
@@ -63,7 +52,7 @@
                         <p class="card-text text-muted">
                             Будущая лабораторная работа (в разработке)
                         </p>
-                        <a href="labwork3.html" class="btn btn-outline-secondary">
+                        <a href="{{ '/labwork3' | relative_url }}" class="btn btn-outline-secondary">
                             Открыть
                         </a>
                     </div>
@@ -73,11 +62,3 @@
         </div>
     </div>
 </section>
-
-<div id="footer-placeholder"></div>
-
-<script src="js/jquery/jquery.min.js"></script>
-<script src="js/app.js"></script>
-
-</body>
-</html>

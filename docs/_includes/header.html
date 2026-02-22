@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="index.html">
+    <a class="navbar-brand fw-bold" href="{{ '/' | relative_url }}">
       MetricForge
     </a>
 
@@ -11,19 +11,19 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
-          <a class="nav-link" href="index.html">Главная страница</a>
+          <a class="nav-link" href="{{ '/' | relative_url }}">Главная страница</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="labwork1.html">Лабораторная 1</a>
+          <a class="nav-link" href="{{ '/labwork1' | relative_url }}">Лабораторная 1</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="labwork2.html">Лабораторная 2</a>
+          <a class="nav-link" href="{{ '/labwork2' | relative_url }}">Лабораторная 2</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="labwork3.html">Лабораторная 3</a>
+          <a class="nav-link" href="{{ '/labwork3' | relative_url }}">Лабораторная 3</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="about.html">О проекте</a>
+          <a class="nav-link" href="{{ '/about' | relative_url }}">О проекте</a>
         </li>
       </ul>
     </div>
