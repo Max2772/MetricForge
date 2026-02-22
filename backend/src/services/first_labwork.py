@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 
-from backend.src.logger import logger
-from backend.src.utils.halstead import HalsteadFS
-from backend.src.models.responses import FirstLBResponse
-from backend.src.models.requests import FirstLBRequest
+from ..logger import logger
+from ..utils.halstead import HalsteadFS
+from ..models.responses import FirstLBResponse
+from ..models.requests import FirstLBRequest
 
 
 async def get_first_labwork_response(input_data: FirstLBRequest) -> FirstLBResponse:
