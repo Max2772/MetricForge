@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const code = codeInput.value || "";
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/labwork/1", {
+            const response = await fetch("https://nonresilient-lauryn-deliberately.ngrok-free.dev/labwork/1", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ labwork_id: 1, code })

@@ -19,6 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get('/')
+async def index():
+    return {'Nothing here, look docs'}
+
 @app.post("/labwork/{lab_id}")
 def analyze_lab(lab_id: int, input_data: LabworkResponse):
     if lab_id != input_data.labwork_id:
