@@ -1,6 +1,6 @@
 import logging
 
-from backend.src.env import LOG_LEVEL
+from env import LOG_LEVEL
 
 
 class LevelFormatter(logging.Formatter):
