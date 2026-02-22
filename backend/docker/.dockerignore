@@ -1,6 +1,7 @@
 tests
 .venv
 .git
+frontend/
 __pycache__/
 .idea
 .vscode
