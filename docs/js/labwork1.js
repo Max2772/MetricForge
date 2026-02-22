@@ -1,8 +1,10 @@
+import { CONFIG } from "./config.js";
+
+const API_URL = CONFIG.API_URL;
+
 document.addEventListener("DOMContentLoaded", () => {
     const codeInput = document.getElementById("codeInput");
     const resultEl = document.getElementById("result");
-    // const API_URL = "https://nonresilient-lauryn-deliberately.ngrok-free.dev";
-    const API_URL = "http://127.0.0.1:9000";
 
     function initTable() {
         const metrics = {

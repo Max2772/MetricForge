@@ -34,8 +34,11 @@ class HalsteadFS:
         if not code:
             return {}, {}, {}
 
+        code_no_comments = re.sub(r'//.*$', '', code, flags=re.MULTILINE)
+        code_no_comments = re.sub(r'\(\*.*?\*\)', '', code_no_comments, flags=re.DOTALL)
+
         op_regex = self._build_operator_pattern()
-        op_matches = list(op_regex.finditer(code))
+        op_matches = list(op_regex.finditer(code_no_comments))
         for m in op_matches:
             op_text = m.group(0)
             self.operators[op_text] += 1
