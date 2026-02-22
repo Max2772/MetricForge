@@ -6,42 +6,22 @@ title: Лабораторная 1 — MetricForge
 <div class="container mt-5">
     <h1>Лабораторная 1: Анализ F#</h1>
     <p>Вставьте код на F# и нажмите "Рассчитать".</p>
-
-    <textarea id="codeInput" class="form-control" rows="10"></textarea>
-
-    <button onclick="calculateMetrics(1)" class="btn btn-primary mt-3">
-        Рассчитать
-    </button>
-
-    <div id="result" class="mt-4"></div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <textarea id="codeInput" class="form-control" rows="10" placeholder="Введите F# код сюда..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="result">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<script>
-async function calculateMetrics(labworkId) {
-    const code = document.getElementById('codeInput').value;
-
-    const response = await fetch(`http://127.0.0.1:8000/labwork/${labworkId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ labwork_id: labworkId, code })
-    });
-
-    const data = await response.json();
-
-    if (data.status === "Не готово") {
-        document.getElementById('result').innerHTML =
-            `<p class="text-warning">Лабораторная ${labworkId} ещё не готова</p>`;
-        return;
-    }
-
-    let html = '<h3>Метрики Холстеда</h3><table class="table"><tbody>';
-
-    for (let key in data.metrics) {
-        html += `<tr><td>${key}</td><td>${data.metrics[key]}</td></tr>`;
-    }
-
-    html += '</tbody></table>';
-
-    document.getElementById('result').innerHTML = html;
-}
-</script>
+<script src="{{ '/js/labwork1.js' | relative_url }}"></script>
