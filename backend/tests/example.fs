@@ -5,6 +5,7 @@ type Operation = Add | Sub | Mul | Div | Fact
 type Stats = { Name: string; Values: int list }
 
 module Math =
+    (* Этот модуль содержит основные математические функции *)
     let rec factorial n = if n <= 1 then 1 else n * factorial (n - 1)
     let safeDiv a b = if b = 0 then None else Some (a / b)
     let apply op a b =
@@ -48,6 +49,7 @@ let main argv =
     let mutable running = true
     let mutable data : int list = []
 
+    // Основной цикл программы
     while running do
         showMenu()
         printf "Выбор: "
@@ -109,4 +111,4 @@ let main argv =
 
             | _ -> printfn "Неверный выбор."
 
-    0
+    0 // Конец программы
