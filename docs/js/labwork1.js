@@ -54,14 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
             html += '</tbody></table>';
 
             html += '<h5>Операторы</h5><table class="table table-bordered"><tbody>';
-            for (let key in data.operators) {
-                html += `<tr><td>${key}</td><td>${data.operators[key]}</td></tr>`;
+            for (let [name, count] of data.operators) {
+                html += `<tr><td>${name}</td><td>${count}</td></tr>`;
             }
             html += '</tbody></table>';
 
             html += '<h5>Операнды</h5><table class="table table-bordered"><tbody>';
-            for (let key in data.operands) {
-                html += `<tr><td>${key}</td><td>${data.operands[key]}</td></tr>`;
+            for (let [name, count] of data.operands) {
+                html += `<tr><td>${name}</td><td>${count}</td></tr>`;
             }
             html += '</tbody></table>';
 
