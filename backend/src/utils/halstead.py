@@ -1,8 +1,7 @@
-import re
 import math
+import re
 from collections import defaultdict
 from typing import Tuple, Dict
-
 
 FS_OPERATORS = [
     "++", "--", "::", "<=", ">=", "==", "<>", "<-", "->", "|>", "||", "&&",
@@ -17,11 +16,10 @@ class HalsteadFS:
     def __init__(self):
         self.operators = defaultdict(int)
         self.operands = defaultdict(int)
-        self.op_regex = self._build_operator_pattern()
+        self.op_regex = self.__build_operator_pattern()
 
-
-    def _build_operator_pattern(self):
-        ops_sorted = sorted(set(FS_OPERATORS), key=lambda s: -len(s))
+    def __build_operator_pattern(self) -> re.Pattern:
+        ops_sorted = sorted(set(FS_OPERATORS), key=len, reverse=True)
         parts = []
         for op in ops_sorted:
             if re.fullmatch(r"[A-Za-z_]\w*", op):
@@ -31,45 +29,47 @@ class HalsteadFS:
         pattern = "|".join(parts)
         return re.compile(pattern)
 
-
-    def _blank_replace(self, match: re.Match) -> str:
+    def __blank_replace(self, match: re.Match) -> str:
         return " " * (match.end() - match.start())
 
+    def calculate(
+            self,
+            code: str,
+            string_as_operand: bool = False
+    ) -> Tuple[Dict[str, float], Dict[str, int], Dict[str, int]]:
 
-    def calculate(self, code: str, string_as_operand: bool = False) -> Tuple[Dict[str, float], Dict[str, int], Dict[str, int]]:
         self.operators = defaultdict(int)
         self.operands = defaultdict(int)
 
         if not code:
             return {}, {}, {}
 
-        code_no_comments = re.sub(r'//.*$', self._blank_replace, code, flags=re.MULTILINE)
-        code_no_comments = re.sub(r'\(\*.*?\*\)', self. _blank_replace, code_no_comments, flags=re.DOTALL)
+        code_no_comments = re.sub(r'//.*$', self.__blank_replace, code, flags=re.MULTILINE)
+        code_no_comments = re.sub(r'\(\*.*?\*\)', self.__blank_replace, code_no_comments, flags=re.DOTALL)
 
         string_pattern = re.compile(r'@?"(?:\\.|[^"\\])*"', flags=re.DOTALL)
         if string_as_operand:
             for match in string_pattern.finditer(code_no_comments):
                 s = match.group(0)
                 self.operands[s] += 1
-        code_no_strings = string_pattern.sub(self._blank_replace, code_no_comments)
+        code_no_strings = string_pattern.sub(self.__blank_replace, code_no_comments)
 
         for match in self.op_regex.finditer(code_no_strings):
             op_text = match.group(0)
             self.operators[op_text] += 1
 
-        code_no_ops = self.op_regex.sub(self._blank_replace, code_no_strings)
+        code_no_ops = self.op_regex.sub(self.__blank_replace, code_no_strings)
 
         number_pattern = re.compile(r'\b\d+(?:\.\d+)?\b')
         for match in number_pattern.finditer(code_no_ops):
             num = match.group(0)
             self.operands[num] += 1
-        code_no_numbers = number_pattern.sub(self._blank_replace, code_no_ops)
+        code_no_numbers = number_pattern.sub(self.__blank_replace, code_no_ops)
 
         identifier_pattern = re.compile(r"\b[a-zA-Z_][\w']*\b")
-        word_ops = {op for op in FS_OPERATORS if re.fullmatch(r"[A-Za-z_]\w*", op)}
         for match in identifier_pattern.finditer(code_no_numbers):
             ident = match.group(0)
-            if ident not in word_ops and ident != "_":
+            if ident != "_":
                 self.operands[ident] += 1
 
         unique_operators = len(self.operators)
@@ -81,9 +81,7 @@ class HalsteadFS:
         length = total_operators + total_operands
         volume = length * math.log2(vocabulary) if vocabulary > 0 else 0.0
 
-        difficulty = 0.0
-        if unique_operands > 0:
-            difficulty = (unique_operators / 2.0) * (total_operands / unique_operands)
+        difficulty = (unique_operators / 2.0) * (total_operands / unique_operands) if unique_operands > 0 else 0.0
         effort = difficulty * volume
         time_seconds = effort / 18.0
 
