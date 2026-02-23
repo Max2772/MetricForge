@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Dict, Union
+from typing import Dict, Tuple, List, Union
 
 
 class FirstLBResponse(BaseModel):
     metrics: Dict[str, Union[int, float]]
-    operators: Dict[str, int]
-    operands: Dict[str, int]
+    operators: List[Tuple[str, int]]
+    operands: List[Tuple[str, int]]

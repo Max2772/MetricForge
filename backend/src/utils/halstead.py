@@ -1,7 +1,7 @@
 import math
 import re
 from collections import defaultdict
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 FS_OPERATORS = [
     "++", "--", "::", "<=", ">=", "==", "<>", "<-", "->", "|>", "||", "&&",
@@ -36,13 +36,13 @@ class HalsteadFS:
             self,
             code: str,
             string_as_operand: bool = False
-    ) -> Tuple[Dict[str, float], Dict[str, int], Dict[str, int]]:
+    ) -> Tuple[Dict[str, float], List[Tuple[str, int]], List[Tuple[str, int]]]:
 
         self.operators = defaultdict(int)
         self.operands = defaultdict(int)
 
         if not code:
-            return {}, {}, {}
+            return {}, [], []
 
         code_no_comments = re.sub(r'//.*$', self.__blank_replace, code, flags=re.MULTILINE)
         code_no_comments = re.sub(r'\(\*.*?\*\)', self.__blank_replace, code_no_comments, flags=re.DOTALL)
@@ -98,4 +98,7 @@ class HalsteadFS:
             "Время": round(time_seconds, 3)
         }
 
-        return metrics, dict(self.operators), dict(self.operands)
+        sorted_operators = sorted(self.operators.items(), key=lambda x: x[1], reverse=True)
+        sorted_operands = sorted(self.operands.items(), key=lambda x: x[1], reverse=True)
+
+        return metrics, sorted_operators, sorted_operands
