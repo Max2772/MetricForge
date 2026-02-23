@@ -27,7 +27,7 @@ async def first_labwork_endpoint(input_data: FirstLBRequest):
 
 
 if __name__ == '__main__':
-    logger.info("Staring FastAPI server...")
+    logger.info("Запуск FastAPI сервера...")
 
     uvicorn.run(
         "main:app",

@@ -5,9 +5,11 @@ from typing import Tuple, Dict
 
 
 FS_OPERATORS = [
-    "++", "--", "::", "<=", ">=", "==", "<>", "<-", "->", "|>", "||", "&&", "+", "-", "*", "/", "%", "=", "<", ">", ":=",
-    "not", "if", "then", "else", "for", "in", "while", "let", "return", "match", "with", "fun", "type", "module",
-    "open", "do", "yield", "lazy", "use", "try", "finally", "when", "->", "<-"
+    "++", "--", "::", "<=", ">=", "==", "<>", "<-", "->", "|>", "||", "&&",
+    "+", "-", "*", "/", "%", "=", "<", ">", ":=",
+    "not", "if", "then", "else", "for", "in", "while", "let", "return",
+    "match", "with", "fun", "type", "module", "open", "do", "yield", "lazy",
+    "use", "try", "finally", "when"
 ]
 
 
@@ -15,6 +17,8 @@ class HalsteadFS:
     def __init__(self):
         self.operators = defaultdict(int)
         self.operands = defaultdict(int)
+        self.op_regex = self._build_operator_pattern()
+
 
     def _build_operator_pattern(self):
         ops_sorted = sorted(set(FS_OPERATORS), key=lambda s: -len(s))
@@ -27,46 +31,45 @@ class HalsteadFS:
         pattern = "|".join(parts)
         return re.compile(pattern)
 
-    def calculate(self, code: str) -> Tuple[Dict[str, float], Dict[str, int], Dict[str, int]]:
+
+    def _blank_replace(self, match: re.Match) -> str:
+        return " " * (match.end() - match.start())
+
+
+    def calculate(self, code: str, string_as_operand: bool = False) -> Tuple[Dict[str, float], Dict[str, int], Dict[str, int]]:
         self.operators = defaultdict(int)
         self.operands = defaultdict(int)
 
         if not code:
             return {}, {}, {}
 
-        code_no_comments = re.sub(r'//.*$', '', code, flags=re.MULTILINE)
-        code_no_comments = re.sub(r'\(\*.*?\*\)', '', code_no_comments, flags=re.DOTALL)
+        code_no_comments = re.sub(r'//.*$', self._blank_replace, code, flags=re.MULTILINE)
+        code_no_comments = re.sub(r'\(\*.*?\*\)', self. _blank_replace, code_no_comments, flags=re.DOTALL)
 
-        op_regex = self._build_operator_pattern()
-        op_matches = list(op_regex.finditer(code_no_comments))
-        for m in op_matches:
-            op_text = m.group(0)
+        string_pattern = re.compile(r'@?"(?:\\.|[^"\\])*"', flags=re.DOTALL)
+        if string_as_operand:
+            for match in string_pattern.finditer(code_no_comments):
+                s = match.group(0)
+                self.operands[s] += 1
+        code_no_strings = string_pattern.sub(self._blank_replace, code_no_comments)
+
+        for match in self.op_regex.finditer(code_no_strings):
+            op_text = match.group(0)
             self.operators[op_text] += 1
 
-        code_without_ops = list(code)
-        for m in op_matches:
-            start, end = m.start(), m.end()
-            for i in range(start, end):
-                code_without_ops[i] = " "
-        code_no_ops = "".join(code_without_ops)
-
-        string_pattern = re.compile(r'@?"(?:\\.|[^"\\])*"')
-        for m in string_pattern.finditer(code_no_ops):
-            s = m.group(0)
-            self.operands[s] += 1
-        code_no_strings = string_pattern.sub(" ", code_no_ops)
+        code_no_ops = self.op_regex.sub(self._blank_replace, code_no_strings)
 
         number_pattern = re.compile(r'\b\d+(?:\.\d+)?\b')
-        for m in number_pattern.finditer(code_no_strings):
-            num = m.group(0)
+        for match in number_pattern.finditer(code_no_ops):
+            num = match.group(0)
             self.operands[num] += 1
-        code_no_numbers = number_pattern.sub(" ", code_no_strings)
+        code_no_numbers = number_pattern.sub(self._blank_replace, code_no_ops)
 
-        identifier_pattern = re.compile(r'\b[a-zA-Z_]\w*\b')
+        identifier_pattern = re.compile(r"\b[a-zA-Z_][\w']*\b")
         word_ops = {op for op in FS_OPERATORS if re.fullmatch(r"[A-Za-z_]\w*", op)}
-        for m in identifier_pattern.finditer(code_no_numbers):
-            ident = m.group(0)
-            if ident not in word_ops:
+        for match in identifier_pattern.finditer(code_no_numbers):
+            ident = match.group(0)
+            if ident not in word_ops and ident != "_":
                 self.operands[ident] += 1
 
         unique_operators = len(self.operators)
@@ -82,7 +85,7 @@ class HalsteadFS:
         if unique_operands > 0:
             difficulty = (unique_operators / 2.0) * (total_operands / unique_operands)
         effort = difficulty * volume
-        time_seconds = effort / 18.0  # по Холстеду: E/18 секунд
+        time_seconds = effort / 18.0
 
         metrics = {
             "η1 (уникальные операторы)": unique_operators,

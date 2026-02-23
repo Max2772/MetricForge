@@ -4,6 +4,7 @@ const API_URL = CONFIG.API_URL;
 
 document.addEventListener("DOMContentLoaded", () => {
     const codeInput = document.getElementById("codeInput");
+    const toggle = document.getElementById("stringAsOperandToggle");
     const resultEl = document.getElementById("result");
 
     function initTable() {
@@ -32,20 +33,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function calculateMetrics() {
         const code = codeInput.value || "";
+        const stringAsOperand = toggle.checked;
 
         try {
             const response = await fetch(`${API_URL}/labwork/1`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ labwork_id: 1, code })
+                body: JSON.stringify({
+                    code,
+                    string_as_operand: stringAsOperand
+                })
             });
 
             const data = await response.json();
-
-            if (data.status === "Не готово") {
-                resultEl.innerHTML = `<p class="text-warning">Лабораторная 1 ещё не готова</p>`;
-                return;
-            }
 
             let html = '<h3>Метрики Холстеда</h3><table class="table table-bordered"><tbody>';
             for (let key in data.metrics) {
@@ -74,4 +74,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     codeInput.addEventListener("input", calculateMetrics);
+    toggle.addEventListener("change", calculateMetrics);
 });

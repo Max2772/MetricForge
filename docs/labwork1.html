@@ -6,15 +6,26 @@ title: Лабораторная 1 — MetricForge
 <div class="container mt-5">
     <h1>Лабораторная 1: Анализ F#</h1>
     <p>Вставьте код на F# и нажмите "Рассчитать".</p>
+
+    <div class="form-check form-switch mb-3">
+        <input class="form-check-input"
+               type="checkbox"
+               id="stringAsOperandToggle"
+               checked>
+        <label class="form-check-label" for="stringAsOperandToggle">
+            Учитывать строковые литералы как операнды
+        </label>
+    </div>
+
     <div class="row">
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-body">
                     <textarea id="codeInput"
-                            class="form-control"
-                            rows="30"
-                            placeholder="Введите F# код сюда..."
-                            autocomplete="off"></textarea>
+                              class="form-control"
+                              rows="30"
+                              placeholder="Введите F# код сюда..."
+                              autocomplete="off"></textarea>
                 </div>
             </div>
         </div>

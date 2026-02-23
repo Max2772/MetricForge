@@ -6,12 +6,16 @@ from ..models.responses import FirstLBResponse
 from ..models.requests import FirstLBRequest
 
 
+analyzer = HalsteadFS()
+
 async def get_first_labwork_response(input_data: FirstLBRequest) -> FirstLBResponse:
     try:
-        analyzer = HalsteadFS()
-        metrics, operators, operands = analyzer.calculate(input_data.code)
+        metrics, operators, operands = analyzer.calculate(
+            code=input_data.code,
+            string_as_operand=input_data.string_as_operand,
+        )
     except Exception as e:
-        logger.error(f"Unexpected error in labwork/1: {e}")
+        logger.error(f"Внутренняя ошибка сервера в labwork/1: {e}")
         raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
 
     return FirstLBResponse(
