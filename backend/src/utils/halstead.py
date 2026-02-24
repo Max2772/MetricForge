@@ -11,6 +11,18 @@ FS_OPERATORS = [
     "use", "try", "finally", "when"
 ]
 
+FS_COMPOSITE_PATTERNS = [
+    ("if..then..else", re.compile(r'\bif\b.*?\bthen\b.*?\belse\b', flags=re.DOTALL)),
+    ("if..then", re.compile(r'\bif\b.*?\bthen\b', flags=re.DOTALL)),
+    ("match..with", re.compile(r'\bmatch\b.*?\bwith\b', flags=re.DOTALL)),
+    ("fo..in..do", re.compile(r'\bfor\b.*?\bin\b.*?\bdo\b', flags=re.DOTALL)),
+    ("while..do", re.compile(r'\bwhile\b.*?\bdo\b', flags=re.DOTALL)),
+    ("try..with..finally", re.compile(r'\btry\b.*?\bwith\b.*?\bfinally\b', flags=re.DOTALL)),
+    ("try..with", re.compile(r'\btry\b.*?\bwith\b', flags=re.DOTALL)),
+    ("try..finally", re.compile(r'\btry\b.*?\bfinally\b', flags=re.DOTALL)),
+    ("let..in", re.compile(r'\blet\b.*?\bin\b', flags=re.DOTALL)),
+]
+
 
 class HalsteadFS:
     def __init__(self):
@@ -31,6 +43,16 @@ class HalsteadFS:
 
     def __blank_replace(self, match: re.Match) -> str:
         return " " * (match.end() - match.start())
+
+    def __extract_composite_operators(self, code: str) -> str:
+        for name, regex in FS_COMPOSITE_PATTERNS:
+            while True:
+                m = regex.search(code)
+                if not m:
+                    break
+                self.operators[name] += 1
+                code = code[:m.start()] + self.__blank_replace(m) + code[m.end():]
+        return code
 
     def calculate(
             self,
@@ -54,7 +76,9 @@ class HalsteadFS:
                 self.operands[s] += 1
         code_no_strings = string_pattern.sub(self.__blank_replace, code_no_comments)
 
-        for match in self.op_regex.finditer(code_no_strings):
+        code_after_composites = self.__extract_composite_operators(code_no_strings)
+
+        for match in self.op_regex.finditer(code_after_composites):
             op_text = match.group(0)
             self.operators[op_text] += 1
 
