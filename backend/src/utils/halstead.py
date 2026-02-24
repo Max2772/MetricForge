@@ -54,6 +54,28 @@ class HalsteadFS:
                 code = code[:m.start()] + self.__blank_replace(m) + code[m.end():]
         return code
 
+    def __extract_composite_operators(self, code: str) -> str:
+        for name, regex in FS_COMPOSITE_PATTERNS:
+            while True:
+                m = regex.search(code)
+                if not m:
+                    break
+                self.operators[name] += 1
+
+                segment = code[m.start():m.end()]
+
+                keywords = [kw for kw in name.split("..")]
+                for kw in keywords:
+                    segment = re.sub(
+                        rf'\b{kw}\b',
+                        lambda x: " " * len(x.group(0)),
+                        segment,
+                        count=1
+                    )
+
+                code = code[:m.start()] + segment + code[m.end():]
+        return code
+
     def calculate(
             self,
             code: str,
