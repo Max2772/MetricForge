@@ -82,7 +82,7 @@ class HalsteadFS:
             op_text = match.group(0)
             self.operators[op_text] += 1
 
-        code_no_ops = self.op_regex.sub(self.__blank_replace, code_no_strings)
+        code_no_ops = self.op_regex.sub(self.__blank_replace, code_after_composites)
 
         number_pattern = re.compile(r'\b\d+(?:\.\d+)?\b')
         for match in number_pattern.finditer(code_no_ops):

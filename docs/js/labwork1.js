@@ -35,45 +35,49 @@ document.addEventListener("DOMContentLoaded", () => {
         const code = codeInput.value || "";
         const stringAsOperand = toggle.checked;
 
-        try {
-            const response = await fetch(`${API_URL}/labwork/1`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    code,
-                    string_as_operand: stringAsOperand
-                })
-            });
+        if (!code) {
+            initTable();
+        } else {
+            try {
+                const response = await fetch(`${API_URL}/labwork/1`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        code,
+                        string_as_operand: stringAsOperand
+                    })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            let html = '<h3>Метрики Холстеда</h3><table class="table table-bordered"><tbody>';
-            for (let key in data.metrics) {
-                html += `<tr><td>${key}</td><td>${data.metrics[key]}</td></tr>`;
+                let html = '<h3>Метрики Холстеда</h3><table class="table table-bordered"><tbody>';
+                for (let key in data.metrics) {
+                    html += `<tr><td>${key}</td><td>${data.metrics[key]}</td></tr>`;
+                }
+                html += '</tbody></table>';
+
+                html += '<h5>Операторы</h5><table class="table table-bordered"><tbody>';
+                let i = 1;
+                for (let [name, count] of data.operators) {
+                    html += `<tr><td>${i}</td><td>${name}</td><td>${count}</td></tr>`;
+                    i++;
+                }
+                html += '</tbody></table>';
+
+                html += '<h5>Операнды</h5><table class="table table-bordered"><tbody>';
+                i = 1;
+                for (let [name, count] of data.operands) {
+                    html += `<tr><td>${i}</td><td>${name}</td><td>${count}</td></tr>`;
+                    i++;
+                }
+                html += '</tbody></table>';
+
+                resultEl.innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                resultEl.innerHTML = `<p class="text-danger">Ошибка при обращении к серверу</p>`;
             }
-            html += '</tbody></table>';
-
-            html += '<h5>Операторы</h5><table class="table table-bordered"><tbody>';
-            let i = 1;
-            for (let [name, count] of data.operators) {
-                html += `<tr><td>${i}</td><td>${name}</td><td>${count}</td></tr>`;
-                i++;
-            }
-            html += '</tbody></table>';
-
-            html += '<h5>Операнды</h5><table class="table table-bordered"><tbody>';
-            i = 1;
-            for (let [name, count] of data.operands) {
-                html += `<tr><td>${i}</td><td>${name}</td><td>${count}</td></tr>`;
-                i++;
-            }
-            html += '</tbody></table>';
-
-            resultEl.innerHTML = html;
-
-        } catch (err) {
-            console.error(err);
-            resultEl.innerHTML = `<p class="text-danger">Ошибка при обращении к серверу</p>`;
         }
     }
 
