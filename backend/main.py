@@ -2,11 +2,10 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.src.services.labwork_2A import get_labwork2A_response
 from src.env import LOG_LEVEL, API_HOST, API_PORT, API_RELOAD
 from src.logger import logger
 from src.models.requests import LabRequest
-from src.services.labwork_1 import get_labwork1_response
+from src.services import (get_labwork1_response, get_labwork2A_response)
 
 app = FastAPI()
 
@@ -24,6 +23,7 @@ lab_handlers = {
     "2B": ...,
     "3": ...,
 }
+
 
 @app.get("/")
 async def index():

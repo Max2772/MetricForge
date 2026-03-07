@@ -1,0 +1,2 @@
+from backend.src.services.labwork_1 import get_labwork1_response
+from backend.src.services.labwork_2A import get_labwork2A_response
