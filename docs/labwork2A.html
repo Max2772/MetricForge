@@ -3,10 +3,30 @@ layout: default
 title: Лабораторная 2A — MetricForge
 ---
 
-<div class="container my-5 text-center">
-  <h1>Лабораторная 2A</h1>
-  <p class="lead text-muted">Эта лабораторная работа ещё не реализована.</p>
-  <a href="{{ '/' | relative_url }}" class="btn btn-secondary mt-3">
-    Вернуться на главную
-  </a>
+<div class="container mt-5">
+    <h1>Лабораторная 2A: Расчёт метрик Джилба, Маккейба</h1>
+    <p>Вставьте код на F# в поле текста</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <textarea id="codeInput"
+                              class="form-control"
+                              rows="30"
+                              placeholder="Введите F# код сюда..."
+                              autocomplete="off"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div id="result">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<script type="module" src="{{ '/js/labworks/labwork2A.js' | relative_url }}"></script>
