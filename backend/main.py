@@ -1,11 +1,12 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.services.first_labwork import get_first_labwork_response
+from backend.src.services.labwork_2A import get_labwork2A_response
 from src.env import LOG_LEVEL, API_HOST, API_PORT, API_RELOAD
 from src.logger import logger
-from src.models.requests import FirstLBRequest
+from src.models.requests import LabRequest
+from src.services.labwork_1 import get_labwork1_response
 
 app = FastAPI()
 
@@ -17,13 +18,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+lab_handlers = {
+    "1": get_labwork1_response,
+    "2A": get_labwork2A_response,
+    "2B": ...,
+    "3": ...,
+}
+
 @app.get("/")
 async def index():
     return {"message": "Nothing here, look docs"}
 
-@app.post("/labwork/1")
-async def first_labwork_endpoint(input_data: FirstLBRequest):
-    return await get_first_labwork_response(input_data)
+
+@app.post("/labwork/{lab_id}")
+async def labwork_endpoint(lab_id: str, input_data: LabRequest):
+    handler = lab_handlers.get(lab_id.upper())
+    if not handler:
+        raise HTTPException(status_code=404, detail="Некорректный lab_id")
+    return await handler(input_data)
 
 
 if __name__ == '__main__':

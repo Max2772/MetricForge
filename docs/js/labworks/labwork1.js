@@ -4,6 +4,7 @@ const API_URL = CONFIG.API_URL;
 
 document.addEventListener("DOMContentLoaded", () => {
     const codeInput = document.getElementById("codeInput");
+    const toggle = document.getElementById("stringAsOperandToggle");
     const resultEl = document.getElementById("result");
 
     function initTable() {

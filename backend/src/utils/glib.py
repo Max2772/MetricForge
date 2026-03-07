@@ -1,7 +1,7 @@
 import re
 from typing import Dict, List
 
-class FSharpGilbAnalyzer:
+class GilbAnalyzer:
     """
     Анализатор метрик Джилба для кода на F#.
     Подсчитывает абсолютную сложность (CL), относительную сложность (cl)
@@ -41,7 +41,7 @@ class FSharpGilbAnalyzer:
 
         # Поиск ключевых слов условных операторов
         # Используем границы слов, чтобы не захватывать части идентификаторов
-        for match in re.finditer(r'\b(' + '|'.join(FSharpGilbAnalyzer.COND_KEYWORDS) + r')\b', line):
+        for match in re.finditer(r'\b(' + '|'.join(GilbAnalyzer.COND_KEYWORDS) + r')\b', line):
             kw = match.group()
             cond_count += 1
             if kw == 'match':
@@ -65,7 +65,7 @@ class FSharpGilbAnalyzer:
             'match_indent': new_match_indent
         }
 
-    def calculate_metrics(self, code: str) -> Dict[str, float]:
+    def calculate(self, code: str) -> Dict[str, float]:
         """
         Основной метод: принимает строку с кодом на F#, возвращает словарь с метриками.
         """
@@ -99,50 +99,11 @@ class FSharpGilbAnalyzer:
             in_match = result['in_match']
             match_indent = result['match_indent']
 
-        # Относительная сложность
         relative = conditional_operators / total_operators if total_operators > 0 else 0.0
 
         return {
-            'absolute_complexity (CL)': conditional_operators,
-            'relative_complexity (cl)': round(relative, 4),
-            'max_nesting (CLI)': max_nesting,
-            'total_operators': total_operators   # для справки
+            'Абсолютная сложность (CL)': conditional_operators,
+            'Относительная сложность (cl)': round(relative, 4),
+            'Макс. уровень вложенности (CLI)': max_nesting,
+            'Всего операторов': total_operators
         }
-
-
-# ================== Пример использования ==================
-if __name__ == '__main__':
-    sample_code = """
-// Пример программы на F# для метрики Джилба
-let factorial n =
-    if n <= 1 then
-        1
-    else
-        n * factorial (n-1)
-
-let rec fibonacci n =
-    match n with
-    | 0 -> 0
-    | 1 -> 1
-    | _ -> fibonacci (n-1) + fibonacci (n-2)
-
-let printNumbers max =
-    for i in 1 .. max do
-        printfn "%d" i
-
-let mutable x = 10
-while x > 0 do
-    printfn "%d" x
-    x <- x - 1
-
-try
-    let result = 10 / 0
-    printfn "%d" result
-with
-    | :? System.DivideByZeroException -> printfn "Division by zero"
-"""
-
-    analyzer = FSharpGilbAnalyzer()
-    metrics = analyzer.calculate_metrics(sample_code)
-    for key, value in metrics.items():
-        print(f"{key}: {value}")
