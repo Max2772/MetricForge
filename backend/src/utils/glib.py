@@ -4,84 +4,76 @@ from typing import Tuple, Dict, List
 
 
 class GilbFS:
-    # Токены, увеличивающие вложенность
-    _NESTING_OPEN = re.compile(
-        r'^\s*(?:'
-        r'if\b'
-        r'|elif\b'
-        r'|for\b.+\bdo\b'
-        r'|while\b.+\bdo\b'
-        r'|match\b'
-        r')',
-        re.IGNORECASE
-    )
+    def __init__(self):
+        self._FS_OPERATORS = [
+            "++", "--", "::", "<=", ">=", "==", "<>", "<-", "->", "|>", "<|", "||", "&&",
+            "+", "-", "*", "/", "%", "=", "<", ">", ":=",
+            "not", "if", "then", "else", "elif", "for", "in", "while", "let", "return",
+            "match", "with", "fun", "type", "module", "open", "do", "yield", "lazy",
+            "use", "try", "finally", "when", "in"
+        ]
+        self.op_regex = self.__build_operator_pattern()
 
-    # Токены, считающиеся условными операторами (CL)
-    _CONDITIONAL = re.compile(
-        r'^\s*(?:'
-        r'if\b'
-        r'|elif\b'
-        r'|for\b.+\bdo\b'
-        r'|while\b.+\bdo\b'
-        r')',
-        re.IGNORECASE
-    )
+        self._OPERATOR_CATEGORIES = {
+            "let": "Определение функции",
+            "=": "Присваивание",
+            "while": "Цикл while",
+            "for": "Цикл for",
+            "match": "Выбор (match)"
+        }
 
-    # match-ветки
-    _MATCH_BRANCH = re.compile(r'^\s*\|(?!\s*(?:'
-                               r'_'
-                               r'|None'
-                               r'|False'
-                               r'|True\s*->)'
-                               r'\s*->).+->'
-                               )
+        self._FUNC_CALL_PAREN = re.compile(r'\b([a-zA-Z_]\w*)\s*\(')
+        self._FUNC_CALL_SPACE = re.compile(r'\b([a-zA-Z_]\w+)\s+[A-Za-z0-9_\[\]\(\)"]')
 
-    # Управляющие конструкции
-    _OPERATOR = re.compile(
-        r'^\s*(?:'
-        r'let\b'
-        r'|if\b|elif\b|else\b'
-        r'|for\b|while\b'
-        r'|match\b'
-        r'|return\b|yield\b|yield!\b'
-        r'|do\b'
-        r'|raise\b|failwith\b|invalidArg\b'
-        r'|try\b|with\b|finally\b'
-        r'|use\b'
-        r'|ignore\b'
-        r'|<-'
-        r')',
-        re.IGNORECASE
-    )
+        self._NESTING_OPEN = re.compile(r'^\s*(?:if|elif|for|while|match|try)\b', re.IGNORECASE)
+        self._CONDITIONAL_WORD = re.compile(r'\b(?:if|elif|for|while|match|when)\b', re.IGNORECASE)
+        self._MATCH_BRANCH = re.compile(r'^\s*\|')
 
+        self._BLOCK_COMMENT_RE = re.compile(r'\(\*.*?\*\)', re.DOTALL)
+        self._LINE_COMMENT_RE = re.compile(r'//.*$')
 
-    @staticmethod
-    def _strip_comments(code: str) -> list[str]:
-        code = re.sub(r'\(\*.*?\*\)', '', code, flags=re.DOTALL)
+        self._STRING_RE = re.compile(r'@"[^"]*"|\"(?:\\.|[^"\\])*\"|\'(?:\\.|[^\'\\])*\'')
+
+    def __build_operator_pattern(self) -> re.Pattern:
+        ops_sorted = sorted(set(self._FS_OPERATORS), key=len, reverse=True)
+        parts = []
+        for op in ops_sorted:
+            if re.fullmatch(r"[A-Za-z_]\w*", op):
+                parts.append(rf"\b{re.escape(op)}\b")
+            else:
+                parts.append(re.escape(op))
+        pattern = "|".join(parts)
+        return re.compile(pattern)
+
+    def _strip_comments(self, code: str) -> list[str]:
+        without_block = re.sub(self._BLOCK_COMMENT_RE, '', code)
         lines = []
-        for line in code.splitlines():
-            line = re.sub(r'//.*$', '', line)
+        for line in without_block.splitlines():
+            line = re.sub(self._LINE_COMMENT_RE, '', line)
             lines.append(line)
         return lines
 
+    def _strip_strings(self, line: str) -> str:
+        return re.sub(self._STRING_RE, '""', line)
 
     @staticmethod
     def _get_indent(line: str) -> int:
         expanded = line.expandtabs(4)
         return len(expanded) - len(expanded.lstrip(' '))
 
-
     def calculate(self, code: str) -> Tuple[Dict[str, float], List[Tuple[str, int]]]:
         lines = self._strip_comments(code)
 
+        operators = defaultdict(int)
         total_operators = 0
         conditional_operators = 0
         max_nesting = 0
-        operators_counter = defaultdict(int)
         nesting_stack: List[int] = []
 
+        conditional_words = {"if", "elif", "for", "while", "match", "when"}
+
         for raw_line in lines:
-            line = raw_line.rstrip()
+            line = raw_line.rstrip('\n')
             if not line.strip():
                 continue
 
@@ -92,29 +84,41 @@ class GilbFS:
                 nesting_stack.pop()
 
             # Проверяем, открывает ли текущая строка новый блок вложенности
-            opens_nesting = bool(self._NESTING_OPEN.match(line))
-            if opens_nesting:
+            if self._NESTING_OPEN.match(line):
                 nesting_stack.append(indent)
 
             current_nesting = len(nesting_stack)
 
-            is_operator = bool(self._OPERATOR.match(line))
-            is_match_branch = bool(self._MATCH_BRANCH.match(line))
+            # Удаляем строки (литералы) перед поиском операторов
+            line_nostr = self._strip_strings(line)
 
-            if is_operator or is_match_branch:
-                total_operators += 1
-                op_name = line.strip().split()[0] if line.strip() else "unknown"
-                if is_match_branch:
-                    op_name = "|"
-                operators_counter[op_name] += 1
+            # Вызовы вида func(...)
+            for call in self._FUNC_CALL_PAREN.findall(line_nostr):
+                if call.lower() not in self._FS_OPERATORS:
+                    operators["Вызов функции"] += 1
 
-            # Условный оператор либо ветка match
-            is_conditional = bool(self._CONDITIONAL.match(line))
-            is_conditional_branch = is_match_branch
+            # Вызовы вида func arg
+            for call in self._FUNC_CALL_SPACE.findall(line_nostr):
+                if call.lower() not in self._FS_OPERATORS:
+                    operators["Вызов функции"] += 1
 
-            if is_conditional or is_conditional_branch:
+            # 1) Если это ветка match (строка начинается с '|'), считаем '|' как оператор-ветку
+            if self._MATCH_BRANCH.match(line):
+                operators['|'] += 1
                 conditional_operators += 1
+                total_operators += 1
                 max_nesting = max(max_nesting, current_nesting)
+
+            # 2) Находим все операторы по всей строке (ключевые слова и символьные)
+            for m in self.op_regex.finditer(line_nostr):
+                op_text = m.group(0)
+                key = op_text.lower() if re.fullmatch(r"[A-Za-z_]\w*", op_text) else op_text
+                operators[key] += 1
+                total_operators += 1
+
+                if isinstance(key, str) and key in conditional_words:
+                    conditional_operators += 1
+                    max_nesting = max(max_nesting, current_nesting)
 
         relative = conditional_operators / total_operators if total_operators > 0 else 0.0
 
@@ -125,6 +129,14 @@ class GilbFS:
             'Всего операторов': total_operators,
         }
 
-        sorted_operators = sorted(operators_counter.items(), key=lambda x: x[1], reverse=True)
+        grouped_operators = defaultdict(int)
+
+        for op, count in operators.items():
+            if op in self._OPERATOR_CATEGORIES:
+                grouped_operators[self._OPERATOR_CATEGORIES[op]] += count
+            else:
+                grouped_operators[op] += count
+
+        sorted_operators = sorted(grouped_operators.items(), key=lambda x: x[1], reverse=True)
 
         return metrics, sorted_operators
