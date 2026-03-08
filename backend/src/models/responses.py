@@ -11,3 +11,4 @@ class LB1Response(BaseModel):
 
 class LB2AResponse(BaseModel):
     metrics: Dict[str, Union[int, float]]
+    operators: List[Tuple[str, int]]

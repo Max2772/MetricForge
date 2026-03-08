@@ -51,16 +51,6 @@ class HalsteadFS:
                 if not m:
                     break
                 self.operators[name] += 1
-                code = code[:m.start()] + self.__blank_replace(m) + code[m.end():]
-        return code
-
-    def __extract_composite_operators(self, code: str) -> str:
-        for name, regex in FS_COMPOSITE_PATTERNS:
-            while True:
-                m = regex.search(code)
-                if not m:
-                    break
-                self.operators[name] += 1
 
                 segment = code[m.start():m.end()]
 

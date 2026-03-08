@@ -1,16 +1,16 @@
 from fastapi import HTTPException
 
 from ..logger import logger
-from ..utils.glib import GilbAnalyzer
+from ..utils.glib import GilbFS
 from ..models.responses import LB2AResponse
 from ..models.requests import LabRequest
 
 
-analyzer = GilbAnalyzer()
+analyzer = GilbFS()
 
 async def get_labwork2A_response(input_data: LabRequest) -> LB2AResponse:
     try:
-        metrics = analyzer.calculate(
+        metrics, operators = analyzer.calculate(
             code=input_data.code,
         )
     except Exception as e:
@@ -18,5 +18,6 @@ async def get_labwork2A_response(input_data: LabRequest) -> LB2AResponse:
         raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
 
     return LB2AResponse(
-        metrics=metrics
+        metrics=metrics,
+        operators=operators,
     )
