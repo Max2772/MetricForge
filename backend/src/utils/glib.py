@@ -15,8 +15,8 @@ class GilbFS:
         self.op_regex = self.__build_operator_pattern()
 
         self._OPERATOR_CATEGORIES = {
-            "let": "Определение функции",
-            "=": "Присваивание",
+            "let": "Определение функции (let)",
+            "<-": "Присваивание (<-)",
             "while": "Цикл while",
             "for": "Цикл for",
             "match": "Выбор (match)"
