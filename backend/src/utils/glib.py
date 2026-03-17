@@ -25,8 +25,10 @@ class GilbFS:
         self._FUNC_CALL_PAREN = re.compile(r'\b([a-zA-Z_]\w*)\s*\(')
         self._FUNC_CALL_SPACE = re.compile(r'\b([a-zA-Z_]\w+)\s+[A-Za-z0-9_\[\]\(\)"]')
 
-        self._NESTING_OPEN = re.compile(r'^\s*(?:if|elif|for|while|try|match)\b', re.IGNORECASE)
+        self._NESTING_OPEN = re.compile(r'^\s*(?:if|elif|for|while|try)\b', re.IGNORECASE)
         self._MATCH_BRANCH = re.compile(r'^\s*\|')
+        self._DEFAULT_BRANCH = re.compile(r'^\s*\|\s*_\s*->')
+        self._MATCH_RE = re.compile(r'^\s*match\b\s*')
 
         self._BLOCK_COMMENT_RE = re.compile(r'\(\*.*?\*\)', re.DOTALL)
         self._LINE_COMMENT_RE = re.compile(r'//.*$')
@@ -62,6 +64,8 @@ class GilbFS:
         lines = self._strip_comments(code_nostr)
 
         in_match = False
+        match_indent = None
+        match_branch_count = 0
         operators = defaultdict(int)
         total_operators = 0
         conditional_operators = 0
@@ -77,19 +81,30 @@ class GilbFS:
 
             indent = self._get_indent(line)
 
-            # Убрать уровни вложенности, если уменьшился отступ
-            while nesting_stack and indent <= nesting_stack[-1] and not in_match:
+            if (
+                    in_match and
+                    (indent <= (match_indent if match_indent is not None else -1))
+                    and not (
+                    self._MATCH_BRANCH.match(line) or self._MATCH_RE.match(line))
+            ):
+                in_match = False
+                match_indent = None
+                match_branch_count = 0
+
+            # Убрать уровни вложенности, если уменьшился отступ (обычные блоки)
+            while nesting_stack and indent <= nesting_stack[-1]:
                 nesting_stack.pop()
 
-            # Проверяем, открывает ли текущая строка новый блок вложенности
             if self._NESTING_OPEN.match(line):
                 nesting_stack.append(indent)
+                base = match_branch_count if in_match else 0
+                max_nesting = max(max_nesting, base + len(nesting_stack))
 
-                if re.match(r'^\s*match\b', line):
-                    in_match = True
-
-            current_nesting = len(nesting_stack)
-            print(f"'{line}':{current_nesting}")
+            # Если встречаем сам 'match' — включаем is_match
+            if self._MATCH_RE.match(line):
+                in_match = True
+                match_indent = indent
+                match_branch_count = 0
 
             # Вызовы вида func(...)
             for call in self._FUNC_CALL_PAREN.findall(line):
@@ -101,17 +116,15 @@ class GilbFS:
                 if call.lower() not in self._FS_OPERATORS:
                     operators["Вызов функции"] += 1
 
-            # 1) Если это ветка match (строка начинается с '|'), считаем '|' как оператор-ветку
+            # 1) если это ветка match (строка начинается с '|')
             if self._MATCH_BRANCH.match(line):
                 operators['|'] += 1
                 total_operators += 1
 
-                nesting_stack.append(indent)
-
-                if not line.strip().startswith('| _ ->'):
+                if not self._DEFAULT_BRANCH.match(line):
+                    match_branch_count += 1
                     conditional_operators += 1
-            else:
-                in_match = False
+                    max_nesting = max(max_nesting, len(nesting_stack) + match_branch_count)
 
             # 2) Находим все операторы по всей строке (ключевые слова и символьные)
             for m in self.op_regex.finditer(line):
@@ -120,9 +133,12 @@ class GilbFS:
                 operators[key] += 1
                 total_operators += 1
 
-                if isinstance(key, str) and key in conditional_words:
+                if key in conditional_words:
+                    # если это обычный условный оператор внутри ветки match,
+                    # его уровень = match_branch_count + текущая глубина стека
+                    base = match_branch_count if in_match else 0
                     conditional_operators += 1
-                    max_nesting = max(max_nesting, current_nesting)
+                    max_nesting = max(max_nesting, base + len(nesting_stack))
 
         relative = conditional_operators / total_operators if total_operators > 0 else 0.0
 
@@ -134,7 +150,6 @@ class GilbFS:
         }
 
         grouped_operators = defaultdict(int)
-
         for op, count in operators.items():
             if op in self._OPERATOR_CATEGORIES:
                 grouped_operators[self._OPERATOR_CATEGORIES[op]] += count
