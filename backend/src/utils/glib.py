@@ -25,8 +25,7 @@ class GilbFS:
         self._FUNC_CALL_PAREN = re.compile(r'\b([a-zA-Z_]\w*)\s*\(')
         self._FUNC_CALL_SPACE = re.compile(r'\b([a-zA-Z_]\w+)\s+[A-Za-z0-9_\[\]\(\)"]')
 
-        self._NESTING_OPEN = re.compile(r'^\s*(?:if|elif|for|while|match|try)\b', re.IGNORECASE)
-        self._CONDITIONAL_WORD = re.compile(r'\b(?:if|elif|for|while|match|when)\b', re.IGNORECASE)
+        self._NESTING_OPEN = re.compile(r'^\s*(?:if|elif|for|while|try|match)\b', re.IGNORECASE)
         self._MATCH_BRANCH = re.compile(r'^\s*\|')
 
         self._BLOCK_COMMENT_RE = re.compile(r'\(\*.*?\*\)', re.DOTALL)
@@ -45,7 +44,7 @@ class GilbFS:
         pattern = "|".join(parts)
         return re.compile(pattern)
 
-    def _strip_comments(self, code: str) -> list[str]:
+    def _strip_comments(self, code: str) -> List[str]:
         without_block = re.sub(self._BLOCK_COMMENT_RE, '', code)
         lines = []
         for line in without_block.splitlines():
@@ -53,24 +52,23 @@ class GilbFS:
             lines.append(line)
         return lines
 
-    def _strip_strings(self, line: str) -> str:
-        return re.sub(self._STRING_RE, '""', line)
-
     @staticmethod
     def _get_indent(line: str) -> int:
         expanded = line.expandtabs(4)
         return len(expanded) - len(expanded.lstrip(' '))
 
     def calculate(self, code: str) -> Tuple[Dict[str, float], List[Tuple[str, int]]]:
-        lines = self._strip_comments(code)
+        code_nostr = re.sub(self._STRING_RE, '""', code)
+        lines = self._strip_comments(code_nostr)
 
+        in_match = False
         operators = defaultdict(int)
         total_operators = 0
         conditional_operators = 0
         max_nesting = 0
         nesting_stack: List[int] = []
 
-        conditional_words = {"if", "elif", "for", "while", "match", "when"}
+        conditional_words = {"if", "elif", "for", "while"}
 
         for raw_line in lines:
             line = raw_line.rstrip('\n')
@@ -80,37 +78,43 @@ class GilbFS:
             indent = self._get_indent(line)
 
             # Убрать уровни вложенности, если уменьшился отступ
-            while nesting_stack and indent <= nesting_stack[-1]:
+            while nesting_stack and indent <= nesting_stack[-1] and not in_match:
                 nesting_stack.pop()
 
             # Проверяем, открывает ли текущая строка новый блок вложенности
             if self._NESTING_OPEN.match(line):
                 nesting_stack.append(indent)
 
-            current_nesting = len(nesting_stack)
+                if re.match(r'^\s*match\b', line):
+                    in_match = True
 
-            # Удаляем строки (литералы) перед поиском операторов
-            line_nostr = self._strip_strings(line)
+            current_nesting = len(nesting_stack)
+            print(f"'{line}':{current_nesting}")
 
             # Вызовы вида func(...)
-            for call in self._FUNC_CALL_PAREN.findall(line_nostr):
+            for call in self._FUNC_CALL_PAREN.findall(line):
                 if call.lower() not in self._FS_OPERATORS:
                     operators["Вызов функции"] += 1
 
             # Вызовы вида func arg
-            for call in self._FUNC_CALL_SPACE.findall(line_nostr):
+            for call in self._FUNC_CALL_SPACE.findall(line):
                 if call.lower() not in self._FS_OPERATORS:
                     operators["Вызов функции"] += 1
 
             # 1) Если это ветка match (строка начинается с '|'), считаем '|' как оператор-ветку
             if self._MATCH_BRANCH.match(line):
                 operators['|'] += 1
-                conditional_operators += 1
                 total_operators += 1
-                max_nesting = max(max_nesting, current_nesting)
+
+                nesting_stack.append(indent)
+
+                if not line.strip().startswith('| _ ->'):
+                    conditional_operators += 1
+            else:
+                in_match = False
 
             # 2) Находим все операторы по всей строке (ключевые слова и символьные)
-            for m in self.op_regex.finditer(line_nostr):
+            for m in self.op_regex.finditer(line):
                 op_text = m.group(0)
                 key = op_text.lower() if re.fullmatch(r"[A-Za-z_]\w*", op_text) else op_text
                 operators[key] += 1
